@@ -10,7 +10,7 @@ module.exports.unmask = (payload, maskingKey) => {
     const maskingKeyByte =
       (maskingKeyByteShift === 0
         ? maskingKey
-        : maskingKey >>> maskingKeyByteShift) & 0b11111111;
+        : maskingKey >>> maskingKeyByteShift) & 0xFF
     const transformedByte = maskingKeyByte ^ payload.readUInt8(i);
     result.writeUInt8(transformedByte, i);
   }

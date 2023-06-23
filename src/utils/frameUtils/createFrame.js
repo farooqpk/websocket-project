@@ -21,7 +21,7 @@ module.exports.createFrame = (data) => {
   // Create a buffer by adding both payloadbytesoffset and payloadlength
   const buffer = Buffer.alloc(payloadBytesOffset + payloadByteLength);
   // Write the first byte of the frame (it contain opcodes etc..)
-  buffer.writeUInt8(0b10000001, 0);
+  buffer.writeUInt8(0x81, 0)
 
 
   if (payloadByteLength <= 125) {
