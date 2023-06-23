@@ -1,0 +1,18 @@
+{
+  "name": "task-chat",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/server/wsServer.js",
+  "scripts": {
+    "start": "nodemon src/server/wsServer.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "dependencies": {
+    "unique-names-generator": "^4.7.1"
+  }
+}
