@@ -13,11 +13,10 @@ const { parseFrame } = require("../utils/frameUtils/parseFrame");
 
 // here we extending EventEmitter class to create events
 class WebSocketServer extends EventEmitter {
-
   constructor() {
     super();
     // this globally unique identifier used to create acceptvalue to send with acceptance header
-    this.GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"; 
+    this.GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     // Map is used to store key value (here we used to store users with their username)
     this.clients = new Map();
     // The opcode specifies the type/purpose of data contained within the frame
@@ -25,17 +24,15 @@ class WebSocketServer extends EventEmitter {
     this.init();
   }
 
-
   init() {
     if (this.server) throw new Error("Server already initialized");
     try {
-      this.createServer()
-      this.setupUpgradeServer()
+      this.createServer();
+      this.setupUpgradeServer();
     } catch (error) {
       console.error("Error initializing WebSocket server:", error);
     }
   }
-
 
   // create http server
   createServer() {
@@ -50,23 +47,21 @@ class WebSocketServer extends EventEmitter {
       res.end(body);
     });
   }
- 
 
   setupUpgradeServer() {
     // handshake between server and client
     // here we upgrade from http server to websocket server
     this.server.on("upgrade", (req, socket) => {
-
       // if there is no websocket header we well return 400
       if (req.headers.upgrade !== "websocket") {
         socket.end("HTTP/1.1 400 Bad Request");
         return;
       }
-      
+
       const acceptKey = req.headers["sec-websocket-key"];
       // here we pass both acceptkey(from client) and GUID to create acceptValue
       const acceptValue = generateAcceptValue(acceptKey, this.GUID);
-       
+
       // handshake acceptance header
       const responseHeaders = [
         "HTTP/1.1 101 Switching Protocols",
@@ -75,14 +70,14 @@ class WebSocketServer extends EventEmitter {
         `Sec-WebSocket-Accept: ${acceptValue}`,
       ];
 
-      // Create a new user 
+      // Create a new user
       const user = {
         username: generateUniqueUserName(),
         socket,
       };
       //add the user to map
       this.clients.set(user.username, user);
-    
+
       // send header as a acceptance of handshake
       // "\r\n" is used to break to new line
       socket.write(responseHeaders.concat("\r\n").join("\r\n"));
@@ -93,27 +88,25 @@ class WebSocketServer extends EventEmitter {
       // also we should send data as frame after websocket connection established
       socket.write(createFrame(`your username is: ${user.username}`));
 
-      //close event
-      socket.on("close", () => {
-        this.clients.delete(user.username);
-        socket.write(createFrame("connection is closed"));
-        // destroy the socket
-        socket.destroy();
-      });
-      
       //data event
       socket.on("data", (buffer) => {
-        // we will get data in the form of frame
+        // we will get buffer data in the form of frame
         this.handleData(user, buffer);
       });
     });
   }
 
 
-
   handleData(user, buffer) {
-
     const message = parseFrame(buffer, this.OPCODES);
+
+    // if opcode is close
+    if (message === this.OPCODES.close) {
+      user.socket.write(createFrame("connection is closed"));
+      user.socket.destroy();
+      this.clients.delete(user.username);
+      return;
+    }
 
     if (message) {
       try {
@@ -147,6 +140,7 @@ class WebSocketServer extends EventEmitter {
       return;
     }
   }
+
 
   sendMessage(senderName, recipientName, payload) {
     // access recipeient from client map

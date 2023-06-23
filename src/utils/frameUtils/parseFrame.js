@@ -1,18 +1,21 @@
 const { unmask } = require("./unmask");
 
-
 module.exports.parseFrame = (buffer, OPCODES) => {
-
+  // take the first byte from the buffer
   const firstByte = buffer.readUint8(0);
-  const opcode = firstByte & 0b00001111; 
-
+ 
+  // then extract the opcode from the first byte
+  const opcode = firstByte & 0b00001111;
+  
   if (opcode === OPCODES.close) {
-    return;
+    return OPCODES.close;
   } else if (opcode === OPCODES.text) {
     const secondByte = buffer.readUInt8(1);
+    
     let offset = 2;
-    let payloadLength = secondByte & 0b01111111; 
-
+    let payloadLength = secondByte & 0b01111111;
+    0b0111111;
+    
     if (payloadLength === 126) {
       payloadLength = buffer.readUInt16BE(offset);
       offset += 2;
