@@ -50,7 +50,7 @@ class WebSocketServer extends EventEmitter {
       res.end(body);
     });
   }
-
+ 
 
   setupUpgradeServer() {
     // handshake between server and client
