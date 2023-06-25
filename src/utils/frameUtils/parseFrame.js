@@ -4,7 +4,6 @@ const {unmask} = require('./unmask')
 module.exports.parseFrame = (buffer, OPCODES) => {
   // take opcode from the first byte by performing a bitmasking AND operation with a mask value.
   const opcode = buffer[0] & 0x0f;
-
   if (opcode === OPCODES.close) {
     return OPCODES.close;
   } else if (OPCODES.text) {
