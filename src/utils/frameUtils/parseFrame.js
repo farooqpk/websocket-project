@@ -1,45 +1,44 @@
-const { unmask } = require("./unmask");
+const {unmask} = require('./unmask')
+
 
 module.exports.parseFrame = (buffer, OPCODES) => {
-
-  // take the first byte from the buffer
-  const firstByte = buffer.readUint8(0);
-
-  // Extract the opcode from the first byte by performing a bitwise AND operation with a mask value.
-  // The mask value (0x0F) helps extract the least significant 4 bits, discarding the rest.
-  const opcode = firstByte & 0x0f;  //15
+  // take opcode from the first byte by performing a bitmasking AND operation with a mask value.
+  const opcode = buffer[0] & 0x0f;
 
   if (opcode === OPCODES.close) {
     return OPCODES.close;
-  } else if (opcode === OPCODES.text) {
-    const secondByte = buffer.readUInt8(1);
+  } else if (OPCODES.text) {
+    // Extract the payload length from the second byte.
+    // we perform a bitwise AND operation with the mask value (0x7f) to extract these bits.
+    const payloadLength = buffer[1] & 0x7f;
 
+    // starting position of the payload
+    // by default 2 index so 3rd position
     let offset = 2;
-    let payloadLength = secondByte & 0x7f;
 
     if (payloadLength === 126) {
-      payloadLength = buffer.readUInt16BE(offset);
-      offset += 2;
+      offset += 2; // Increase offset by 2 for a payload length of 126 (4th index or 5th position).
     } else if (payloadLength === 127) {
-      // If payload length is 127, it is represented in the next 8 bytes
-      // which is larger than the Number type can accurately represent.
-      // In this case, you may need to handle it differently or throw an error.
       throw new Error("Payload length exceeds the maximum supported length");
     }
 
-    const isMasked = Boolean((secondByte >>> 7) & 0x01); // get first bit of a second byte
+    // check if the payload is masked
+    // To determine this, we get the first bit of the second byte:
+    // 1. Shift the bits of the second byte to the right by 7 positions.
+    // 2. Perform a bitwise AND operation to take the rightmost bit.
+    // 3. Convert the result to a boolean.
+    const isMasked = Boolean((buffer[1] >>> 7) & 0x01);
 
     if (isMasked) {
-      const maskingKey = buffer.readUInt32BE(offset); // read 4-byte (32-bit) masking key
+      // Increase offset by 4 for a masked payload (8th index or 9th position)
       offset += 4;
-      const maskedPayload = buffer.subarray(offset, offset + payloadLength);
-      const unmaskedPayload = unmask(maskedPayload, maskingKey);
-
+      const maskedPayload = buffer.slice(offset, offset + payloadLength);
+      // masking key starts 4 bytes before the offset
+      const maskingKey = buffer.slice(offset - 4, offset); 
+      const unmaskedPayload = unmask(maskedPayload,maskingKey)
       return unmaskedPayload.toString("utf-8");
     }
-
-    return buffer.subarray(offset, offset + payloadLength).toString("utf-8");
+  } else {
+    return null;
   }
-
-  return null;
 };
